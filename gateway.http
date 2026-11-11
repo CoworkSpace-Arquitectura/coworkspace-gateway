@@ -1,0 +1,48 @@
+@gw = http://localhost:3000/api
+
+### 1. Estado de todos los servicios
+GET {{gw}}/health
+
+### 2. Público: países (Currency)
+GET {{gw}}/countries
+
+### 3. Público: sedes de Colombia (Space)
+GET {{gw}}/locations?country=CO
+
+### 4. Público: convertir 60.000 COP a MXN (Currency)
+GET {{gw}}/convert?amount=60000&from=COP&to=MXN
+
+### 5. Protegido sin token: debe dar 401
+GET {{gw}}/bookings
+
+### 6. Crear sede sin token: debe dar 401 (escribir siempre exige token)
+POST {{gw}}/locations
+Content-Type: application/json
+
+{ "name": "Sede Intrusa", "city": "X", "address": "X" }
+
+### 7. Registro: crea el miembro en Membership y devuelve un token
+# @name registro
+POST {{gw}}/auth/register
+Content-Type: application/json
+
+{ "name": "Mateo Herrera", "email": "mateo-gateway@example.com" }
+
+### 8. Login con el mismo correo
+# @name login
+POST {{gw}}/auth/login
+Content-Type: application/json
+
+{ "email": "mateo-gateway@example.com" }
+
+### 9. ¿Quién soy? (lee el token)
+GET {{gw}}/auth/me
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### 10. Protegido con token: mis reservas (Booking)
+GET {{gw}}/bookings?memberId={{login.response.body.member.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### 11. Token falso: debe dar 401
+GET {{gw}}/bookings
+Authorization: Bearer token-inventado
