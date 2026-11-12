@@ -17,6 +17,7 @@ export function serviceBases() {
     currency: baseUrl('CURRENCY_URL', 'http://localhost:3009'),
     notification: baseUrl('NOTIFICATION_URL', 'http://localhost:3007'),
     community: baseUrl('COMMUNITY_URL', 'http://localhost:3006'),
+    analytics: baseUrl('ANALYTICS_URL', 'http://localhost:3008'),
   };
 }
 
@@ -40,5 +41,7 @@ export function buildRoutes(): ServiceRoute[] {
     { prefix: '/api/directory', target: `${s.community}/directory`, publicRead: false },
     { prefix: '/api/events', target: `${s.community}/events`, publicRead: true },
     { prefix: '/api/messages', target: `${s.community}/messages`, publicRead: false },
+    { prefix: '/api/metrics', target: `${s.analytics}/metrics`, publicRead: false },
+    { prefix: '/api/etl', target: `${s.analytics}/etl`, publicRead: false },
   ];
 }
