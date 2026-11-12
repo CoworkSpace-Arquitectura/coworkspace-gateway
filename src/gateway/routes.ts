@@ -43,5 +43,6 @@ export function buildRoutes(): ServiceRoute[] {
     { prefix: '/api/messages', target: `${s.community}/messages`, publicRead: false },
     { prefix: '/api/metrics', target: `${s.analytics}/metrics`, publicRead: false },
     { prefix: '/api/etl', target: `${s.analytics}/etl`, publicRead: false },
+    { prefix: '/api/access', target: `${s.access}/access`, publicRead: false },
   ];
 }
