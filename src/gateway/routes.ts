@@ -15,6 +15,7 @@ export function serviceBases() {
     booking: baseUrl('BOOKING_URL', 'http://localhost:3004'),
     billing: baseUrl('BILLING_URL', 'http://localhost:3005'),
     currency: baseUrl('CURRENCY_URL', 'http://localhost:3009'),
+        notification: baseUrl('NOTIFICATION_URL', 'http://localhost:3007'),
   };
 }
 
@@ -34,5 +35,6 @@ export function buildRoutes(): ServiceRoute[] {
     { prefix: '/api/countries', target: `${s.currency}/countries`, publicRead: true },
     { prefix: '/api/rates', target: `${s.currency}/rates`, publicRead: true },
     { prefix: '/api/convert', target: `${s.currency}/convert`, publicRead: true },
+        { prefix: '/api/notifications', target: `${s.notification}/notifications`, publicRead: false },
   ];
 }
