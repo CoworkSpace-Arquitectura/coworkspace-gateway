@@ -1,8 +1,12 @@
+export type Role = 'MEMBER' | 'MANAGER' | 'OWNER';
+
 export interface ServiceRoute {
   prefix: string; // ruta pública en el Gateway
   target: string; // servicio + ruta interna
   publicRead: boolean; // los GET no piden token
   publicPaths?: string[]; // subrutas que nunca piden token
+  readRoles?: Role[]; // roles que pueden leer (GET); sin esto, cualquier usuario con sesión
+  writeRoles?: Role[]; // roles que pueden escribir (POST, PUT, PATCH, DELETE)
 }
 
 const baseUrl = (name: string, fallback: string) => (process.env[name] ?? fallback).replace(/\/$/, '');
@@ -21,17 +25,24 @@ export function serviceBases() {
   };
 }
 
+const STAFF: Role[] = ['MANAGER', 'OWNER'];
+const OWNER: Role[] = ['OWNER'];
+
 export function buildRoutes(): ServiceRoute[] {
   const s = serviceBases();
   return [
-    { prefix: '/api/locations', target: `${s.space}/locations`, publicRead: true },
-    { prefix: '/api/rooms', target: `${s.space}/rooms`, publicRead: true },
-    { prefix: '/api/desks', target: `${s.space}/desks`, publicRead: true },
-    { prefix: '/api/plans', target: `${s.membership}/plans`, publicRead: true },
-    { prefix: '/api/members', target: `${s.membership}/members`, publicRead: false },
+    // Catálogo: todos lo ven; solo gerentes y el jefe lo modifican
+    { prefix: '/api/locations', target: `${s.space}/locations`, publicRead: true, writeRoles: STAFF },
+    { prefix: '/api/rooms', target: `${s.space}/rooms`, publicRead: true, writeRoles: STAFF },
+    { prefix: '/api/desks', target: `${s.space}/desks`, publicRead: true, writeRoles: STAFF },
+    // Planes: todos los ven; solo el jefe los crea
+    { prefix: '/api/plans', target: `${s.membership}/plans`, publicRead: true, writeRoles: OWNER },
+    // Lista de miembros: gerentes y jefe la ven; solo el jefe cambia roles
+    { prefix: '/api/members', target: `${s.membership}/members`, publicRead: false, readRoles: STAFF, writeRoles: OWNER },
     { prefix: '/api/subscriptions', target: `${s.membership}/subscriptions`, publicRead: false },
     { prefix: '/api/bookings', target: `${s.booking}/bookings`, publicRead: false, publicPaths: ['/availability'] },
     { prefix: '/api/credentials', target: `${s.access}/credentials`, publicRead: false },
+    { prefix: '/api/access', target: `${s.access}/access`, publicRead: false },
     { prefix: '/api/charges', target: `${s.billing}/charges`, publicRead: false },
     { prefix: '/api/invoices', target: `${s.billing}/invoices`, publicRead: false },
     { prefix: '/api/countries', target: `${s.currency}/countries`, publicRead: true },
@@ -41,8 +52,8 @@ export function buildRoutes(): ServiceRoute[] {
     { prefix: '/api/directory', target: `${s.community}/directory`, publicRead: false },
     { prefix: '/api/events', target: `${s.community}/events`, publicRead: true },
     { prefix: '/api/messages', target: `${s.community}/messages`, publicRead: false },
-    { prefix: '/api/metrics', target: `${s.analytics}/metrics`, publicRead: false },
-    { prefix: '/api/etl', target: `${s.analytics}/etl`, publicRead: false },
-    { prefix: '/api/access', target: `${s.access}/access`, publicRead: false },
+    // Métricas: solo gerentes y el jefe
+    { prefix: '/api/metrics', target: `${s.analytics}/metrics`, publicRead: false, readRoles: STAFF, writeRoles: STAFF },
+    { prefix: '/api/etl', target: `${s.analytics}/etl`, publicRead: false, readRoles: STAFF, writeRoles: STAFF },
   ];
 }

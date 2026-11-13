@@ -1,12 +1,14 @@
 import { ConflictException, Injectable, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { signToken } from '../gateway/jwt.js';
 import { serviceBases } from '../gateway/routes.js';
+import type { Role } from '../gateway/routes.js';
 import { LoginDto, RegisterDto } from './dto/auth.dto.js';
 
 export interface Member {
   id: string;
   name: string;
   email: string;
+  role: Role;
 }
 
 @Injectable()
@@ -15,10 +17,10 @@ export class AuthService {
     const response = await this.callMembership('/members', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: dto.name, email: dto.email }),
+      body: JSON.stringify({ name: dto.name, email: dto.email, password: dto.password }),
     });
     if (response.status === 409) {
-      throw new ConflictException('Ya existe un miembro con ese correo');
+      throw new ConflictException('Ya existe una cuenta con ese correo');
     }
     if (!response.ok) {
       throw new ServiceUnavailableException(`Membership respondió con estado ${response.status}`);
@@ -26,25 +28,28 @@ export class AuthService {
     return this.session((await response.json()) as Member);
   }
 
+  // Membership verifica la contraseña; el Gateway nunca ve el hash
   async login(dto: LoginDto) {
-    const response = await this.callMembership(`/members?email=${encodeURIComponent(dto.email)}`);
+    const response = await this.callMembership('/internal/auth/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: dto.email, password: dto.password }),
+    });
+    if (response.status === 401) {
+      throw new UnauthorizedException('Correo o contraseña incorrectos');
+    }
     if (!response.ok) {
       throw new ServiceUnavailableException(`Membership respondió con estado ${response.status}`);
     }
-    const members = (await response.json()) as Member[];
-    const member = members.find((m) => m.email === dto.email);
-    if (!member) {
-      throw new UnauthorizedException('No existe un miembro con ese correo');
-    }
-    return this.session(member);
+    return this.session((await response.json()) as Member);
   }
 
   private session(member: Member) {
     return {
-      accessToken: signToken({ sub: member.id, email: member.email, name: member.name }),
+      accessToken: signToken({ sub: member.id, email: member.email, name: member.name, role: member.role }),
       tokenType: 'Bearer',
       expiresIn: '8h',
-      member,
+      member: { id: member.id, name: member.name, email: member.email, role: member.role },
     };
   }
 
