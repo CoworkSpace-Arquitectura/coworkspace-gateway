@@ -3,6 +3,7 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { rateLimit } from 'express-rate-limit';
 import { registerProxies } from './gateway/proxy.js';
 import { setupMetrics } from './metrics.js';
+import { setupSwagger } from './swagger.js';
 
 /** Configuración del Gateway: la usan main.ts y las pruebas de integración. */
 export function configureGateway(app: NestExpressApplication) {
@@ -32,5 +33,6 @@ export function configureGateway(app: NestExpressApplication) {
   app.useBodyParser('json');
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
+  setupSwagger(app);
   return app;
 }

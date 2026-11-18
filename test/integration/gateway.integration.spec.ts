@@ -75,4 +75,11 @@ describe('Gateway (integración)', () => {
     expect(res.text).toMatch(/http_requests_total\{[^}]*route="\/api\/bookings"[^}]*status_code="401"/);
     expect(res.text).toContain('http_request_duration_seconds_bucket');
   });
+
+  it('publica la documentación de la API con las rutas que reenvía', async () => {
+    const res = await request(app.getHttpServer()).get('/api/docs-json').expect(200);
+    expect(res.body.openapi).toBeDefined();
+    expect(res.body.paths['/api/auth/login']).toBeDefined();
+    expect(res.body.paths['/api/bookings']).toBeDefined();
+  });
 });
